@@ -1,30 +1,71 @@
-// ===========================
+// ==========================================
 //  main.js – FIT4015 StudyNotes
 //  Logic trang khách hàng (index.html)
-// ===========================
+// ==========================================
 
-var allDocs = [];        // cache toàn bộ data từ API
+var allDocs = [];        // Cache dữ liệu tài liệu hiện tại
 var favorites = JSON.parse(localStorage.getItem('sn_favs') || '[]');
 var isGridView = true;
 
+// Lưu trữ trạng thái bộ lọc hiện tại để gọi API
+var currentFilters = {
+  search: "",
+  subjectId: "",
+  schoolYear: ""
+};
+
 // --- Khởi động ---
 document.addEventListener('DOMContentLoaded', function() {
-  loadDocuments();
+  initApp();
   bindSearchEvents();
   bindViewToggle();
 });
 
 // ==============================
-// LOAD & RENDER
+// KHỞI TẠO & TẢI DANH MỤC MÔN HỌC
+// ==============================
+function initApp() {
+  showSkeleton(true);
+  hideError();
+
+  // Tải danh mục môn học động từ MockAPI trước để đổ vào ô Select Filter
+  getAllSubjects()
+    .then(function(subjects) {
+      populateFilterSubject(subjects);
+      // Sau khi đổ xong môn học, tiến hành tải danh sách tài liệu mặc định
+      loadDocuments();
+    })
+    .catch(function(err) {
+      showSkeleton(false);
+      showError('Không thể tải danh mục môn học: ' + err.message);
+    });
+}
+
+// Đổ dữ liệu môn học vào thanh lọc ô select <select id="filterSubject">
+function populateFilterSubject(subjects) {
+  var sel = document.getElementById('filterSubject');
+  // Xóa sạch các option cũ trừ option đầu tiên
+  sel.innerHTML = '<option value="">-- Tất cả môn học --</option>';
+  
+  subjects.forEach(function(sub) {
+    var opt = document.createElement('option');
+    opt.value = sub.id;        // Value lưu ID của môn học trên MockAPI (Ví dụ: "1", "2")
+    opt.textContent = sub.name; // Text hiển thị tên môn (Ví dụ: "Toán", "Ngữ Văn")
+    sel.appendChild(opt);
+  });
+}
+
+// ==============================
+// LOAD & RENDER DOCUMENTS
 // ==============================
 function loadDocuments() {
   showSkeleton(true);
   hideError();
 
-  getAllDocuments()
+  // Gọi hàm API: Truyền tham số để MockAPI xử lý lọc từ Server luôn
+  getAllDocuments(currentFilters.search, currentFilters.subjectId, currentFilters.schoolYear)
     .then(function(docs) {
       allDocs = docs;
-      populateFilterSubject(docs);
       renderDocs(docs);
       showSkeleton(false);
     })
@@ -34,7 +75,7 @@ function loadDocuments() {
     });
 }
 
-// Render danh sách card
+// Render danh sách card ra ngoài màn hình
 function renderDocs(docs) {
   var grid = document.getElementById('docGrid');
   var empty = document.getElementById('emptyState');
@@ -42,26 +83,22 @@ function renderDocs(docs) {
 
   grid.innerHTML = '';
 
-  if (docs.length === 0) {
+  // Chỉ lọc và hiển thị những tài liệu có trạng thái "Approved" (Đã được duyệt)
+  var visible = docs.filter(function(d) { return d.status === 'Approved' || !d.status; });
+
+  if (visible.length === 0) {
     grid.style.display = 'none';
     empty.style.display = 'block';
-    count.textContent = 'Không có kết quả';
+    count.textContent = 'Không tìm thấy tài liệu phù hợp';
     return;
   }
 
   empty.style.display = 'none';
   grid.style.display = 'flex';
   grid.className = isGridView ? 'row g-4' : 'row g-3 list-view';
-  count.textContent = 'Hiển thị ' + docs.length + ' tài liệu';
+  count.textContent = 'Hiển thị ' + visible.length + ' tài liệu';
 
-  // Chỉ render Approved ở trang public
-  var visible = docs.filter(function(d) { return d.status === 'Approved'; });
-  if (visible.length === 0) {
-    empty.style.display = 'block';
-    count.textContent = 'Chưa có tài liệu được duyệt';
-    return;
-  }
-
+  // Tiến hành dựng giao diện cho từng Card tài liệu
   visible.forEach(function(doc, idx) {
     var col = document.createElement('div');
     col.className = isGridView ? 'col-sm-6 col-md-4 col-lg-4' : 'col-12';
@@ -69,104 +106,137 @@ function renderDocs(docs) {
     col.innerHTML = buildDocCard(doc);
     grid.appendChild(col);
   });
-
-  count.textContent = 'Hiển thị ' + visible.length + ' tài liệu';
 }
 
-// Tạo HTML cho mỗi card
+// ĐÃ SỬA: Tạo cấu trúc HTML tự động sinh bản thu nhỏ mờ dựa trên chữ viết tắt của Tende
 function buildDocCard(doc) {
   var isFav = favorites.indexOf(doc.id) !== -1;
-  var imgHtml = isValidUrl(doc.imageUrl)
-    ? '<img class="doc-card-img" src="' + doc.imageUrl + '" alt="' + doc.title + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
-      + '<div class="doc-card-img-placeholder" style="display:none;">📄</div>'
-    : '<div class="doc-card-img-placeholder">📄</div>';
+  
+  // Đồng bộ hóa các trường thuộc tính tiếng Việt từ MockAPI
+  var title = doc.Tende || 'Không có tiêu đề';
+  var description = doc.Mota || 'Chưa có mô tả ngắn.';
+  var year = doc.Nam || '–';
+  var fileLink = doc.Link || '#';
 
-  return '<div class="doc-card">'
-    + imgHtml
-    + '<div class="doc-card-body">'
-    +   '<div class="doc-card-subject">' + (doc.subject || 'Chưa phân loại') + '</div>'
-    +   '<div class="doc-card-title">' + (doc.title || 'Không có tiêu đề') + '</div>'
-    +   '<div class="doc-card-desc">' + (doc.description || 'Chưa có mô tả.') + '</div>'
-    +   '<div class="doc-card-meta">'
-    +     '<span><i class="bi bi-calendar3"></i> ' + (doc.year || '–') + '</span>'
+  // Lấy 2 ký tự đầu của tiêu đề viết hoa làm background mờ nghệ thuật
+  var shortText = title.substring(0, 2).toUpperCase();
+
+  // Khối HTML giả lập bản xem trước tài liệu thu nhỏ không cần imageUrl
+  var documentThumbnailHtml = '<div class="user-doc-thumbnail-wrap">'
+    + '  <div class="user-doc-blur-bg">' + shortText + '</div>'
+    + '  <div class="user-doc-preview-card">'
+    + '     <i class="bi bi-file-earmark-pdf-fill text-danger fs-1"></i>'
+    + '     <small class="text-muted d-block mt-1" style="font-size:10px; font-weight:600; letter-spacing:1px;">STUDY NOTES</small>'
+    + '  </div>'
+    + '</div>';
+
+  return '<div class="doc-card h-100 shadow-sm border-1 rounded-3 overflow-hidden bg-white">'
+    + documentThumbnailHtml
+    + '<div class="doc-card-body p-3">'
+    +   '<div class="doc-card-title fw-bold text-dark text-truncate" style="font-size:16px;" title="' + title + '">' + title + '</div>'
+    +   '<div class="doc-card-desc text-muted mt-1 text-clamp-2" style="font-size:13px; min-height:38px;">' + description + '</div>'
+    +   '<div class="doc-card-meta d-flex justify-content-between align-items-center mt-3 text-secondary" style="font-size:12px;">'
+    +     '<span><i class="bi bi-calendar3"></i> Năm học: ' + year + '</span>'
     +     '<span><i class="bi bi-eye"></i> ' + (doc.views || 0) + ' lượt xem</span>'
-    +     '<button class="btn-fav ' + (isFav ? 'active' : '') + '" data-id="' + doc.id + '" title="Yêu thích">'
-    +       '<i class="bi ' + (isFav ? 'bi-heart-fill' : 'bi-heart') + '"></i>'
+    +     '<button class="btn-fav ' + (isFav ? 'active' : '') + '" data-id="' + doc.id + '" title="Yêu thích" style="border:none; background:transparent;">'
+    +       '<i class="bi ' + (isFav ? 'bi-heart-fill text-danger' : 'bi-heart') + '"></i>'
     +     '</button>'
     +   '</div>'
-    +   '<div class="doc-card-footer">'
-    +     '<button class="btn-detail" onclick="openDetail(\'' + doc.id + '\')"><i class="bi bi-eye"></i> Xem chi tiết</button>'
-    +     '<a class="btn-download" href="' + (doc.fileUrl || '#') + '" target="_blank"><i class="bi bi-download"></i> Tải xuống</a>'
+    +   '<div class="doc-card-footer d-flex gap-2 mt-3">'
+    +     '<button class="btn btn-sm btn-outline-primary w-50" onclick="openDetail(\'' + doc.id + '\')"><i class="bi bi-eye"></i> Xem chi tiết</button>'
+    +     '<a class="btn btn-sm btn-primary w-50 d-flex align-items-center justify-content-center" href="' + fileLink + '" target="_blank"><i class="bi bi-download me-1"></i> Tải xuống</a>'
     +   '</div>'
     + '</div>'
     + '</div>';
 }
 
 // ==============================
-// DETAIL MODAL
+// DETAIL MODAL & TĂNG VIEW
 // ==============================
+// ĐÃ SỬA: Loại bỏ hình ảnh và thiết kế cấu trúc bản xem trước mờ thu nhỏ to hơn bên trong modal chi tiết
 function openDetail(id) {
   var doc = allDocs.find(function(d) { return d.id === id; });
   if (!doc) return;
 
   var body = document.getElementById('modalBody');
-  var imgHtml = isValidUrl(doc.imageUrl)
-    ? '<img class="modal-detail-img" src="' + doc.imageUrl + '" alt="' + doc.title + '">'
-    : '';
+  
+  var title = doc.Tende || 'Không có tiêu đề';
+  var description = doc.Mota || 'Chưa có mô tả cho tài liệu này.';
+  var year = doc.Nam || '–';
+  var fileLink = doc.Link || '#';
+  var temporaryViews = (parseInt(doc.views) || 0) + 1;
+  var shortText = title.substring(0, 2).toUpperCase();
 
-  body.innerHTML = imgHtml
-    + '<div class="modal-subject-tag">' + (doc.subject || 'Chưa phân loại') + '</div>'
-    + '<h4 class="modal-doc-title">' + (doc.title || '–') + '</h4>'
-    + '<div class="modal-meta">'
-    +   '<i class="bi bi-calendar3"></i> Năm học: <strong>' + (doc.year || '–') + '</strong>'
-    +   ' &nbsp;·&nbsp; <i class="bi bi-eye"></i> ' + ((doc.views || 0) + 1) + ' lượt xem'
+  // Tạo banner tài liệu thu nhỏ lớn trong Modal chi tiết thay cho hình ảnh cũ
+  var modalPreviewHtml = '<div class="user-doc-thumbnail-wrap rounded-3 mb-3" style="height: 180px; background: #f1f3f5;">'
+    + '  <div class="user-doc-blur-bg" style="font-size: 120px;">' + shortText + '</div>'
+    + '  <div class="user-doc-preview-card" style="padding: 20px 40px;">'
+    + '     <i class="bi bi-file-earmark-text-fill text-primary" style="font-size: 3.5rem;"></i>'
+    + '     <span class="d-block mt-2 badge bg-secondary text-uppercase" style="font-size: 11px;">Tài liệu học tập</span>'
+    + '  </div>'
+    + '</div>';
+
+  body.innerHTML = modalPreviewHtml
+    + '<h4 class="modal-doc-title fw-bold text-dark mt-2">' + title + '</h4>'
+    + '<div class="modal-meta my-2 text-secondary" style="font-size:14px;">'
+    +   '<i class="bi bi-calendar3"></i> Năm học: <strong>' + year + '</strong>'
+    +   ' &nbsp;·&nbsp; <i class="bi bi-eye-fill text-info"></i> Lượt xem: <span id="modalViewCount">' + temporaryViews + '</span>'
     + '</div>'
-    + '<p class="modal-desc">' + (doc.description || 'Chưa có mô tả cho tài liệu này.') + '</p>'
-    + '<a class="btn-modal-dl" href="' + (doc.fileUrl || '#') + '" target="_blank">'
-    +   '<i class="bi bi-download"></i> Tải tài liệu xuống'
-    + '</a>';
+    + '<hr class="text-muted opacity-25" />'
+    + '<h6 class="fw-bold text-secondary mb-1" style="font-size:13px;">MÔ TẢ CHI TIẾT:</h6>'
+    + '<p class="modal-desc text-dark lh-base" style="font-size:15px; text-align:justify;">' + description + '</p>'
+    + '<div class="mt-4 text-end">'
+    +   '<button class="btn btn-light me-2" data-bs-dismiss="modal">Đóng lại</button>'
+    +   '<a class="btn btn-primary btn-modal-dl px-4" href="' + fileLink + '" target="_blank">'
+    +     '<i class="bi bi-download"></i> Xem file / Tải tài liệu gốc'
+    +   '</a>'
+    + '</div>';
 
   var modal = new bootstrap.Modal(document.getElementById('detailModal'));
   modal.show();
 
-  // Tăng lượt xem bằng PUT API
-  incrementView(doc).then(function(updated) {
-    doc.views = updated.views;
-  }).catch(function() {});
+  // Kích hoạt hàm tăng lượt xem gửi PUT API chạy ngầm lên MockAPI
+  if (typeof incrementView === 'function') {
+    incrementView(doc)
+      .then(function(updatedDoc) {
+        doc.views = updatedDoc.views;
+      })
+      .catch(function(err) {
+        console.error("Không thể cập nhật lượt xem lên máy chủ:", err);
+      });
+  }
 }
 
 // ==============================
-// SEARCH & FILTER
+// SEARCH & FILTER (TÍCH HỢP SERVER API)
 // ==============================
 function bindSearchEvents() {
-  // Vanilla JS events
   document.getElementById('btnSearch').addEventListener('click', applyFilters);
+  
   document.getElementById('searchInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') applyFilters();
   });
+  
   document.getElementById('filterSubject').addEventListener('change', applyFilters);
   document.getElementById('filterYear').addEventListener('change', applyFilters);
   document.getElementById('btnReset').addEventListener('click', resetFilters);
 
-  // jQuery events (đáp ứng yêu cầu jQuery .on())
   $('#searchInput').on('input', function() {
-    if ($(this).val().trim() === '') applyFilters();
+    if ($(this).val().trim() === '') {
+      applyFilters();
+    }
   });
 
-  // jQuery fadeIn cho kết quả khi filter
   $(document).on('click', '.btn-fav', handleFavClick);
 }
 
 function applyFilters() {
-  var search  = document.getElementById('searchInput').value;
-  var subject = document.getElementById('filterSubject').value;
-  var year    = document.getElementById('filterYear').value;
+  currentFilters.search = document.getElementById('searchInput').value.trim();
+  currentFilters.subjectId = document.getElementById('filterSubject').value;
+  currentFilters.schoolYear = document.getElementById('filterYear').value;
 
-  var filtered = filterDocuments(allDocs, search, subject, year);
-
-  // jQuery fadeOut -> render -> fadeIn
   $('#docGrid').fadeOut(120, function() {
-    renderDocs(filtered);
+    loadDocuments(); 
     $('#docGrid').fadeIn(200);
   });
 }
@@ -175,27 +245,22 @@ function resetFilters() {
   document.getElementById('searchInput').value = '';
   document.getElementById('filterSubject').value = '';
   document.getElementById('filterYear').value = '';
-  renderDocs(allDocs);
-}
-
-function populateFilterSubject(docs) {
-  var subjects = uniqueValues(docs, 'subject');
-  var sel = document.getElementById('filterSubject');
-  subjects.forEach(function(s) {
-    var opt = document.createElement('option');
-    opt.value = s;
-    opt.textContent = s;
-    sel.appendChild(opt);
+  
+  currentFilters = { search: "", subjectId: "", schoolYear: "" };
+  
+  $('#docGrid').fadeOut(120, function() {
+    loadDocuments();
+    $('#docGrid').fadeIn(200);
   });
 }
 
 // ==============================
-// FAVOURITES (jQuery DOM)
+// FAVOURITES (SỬ DỤNG JQUERY)
 // ==============================
 function handleFavClick(e) {
   e.stopPropagation();
   var btn = $(this);
-  var id = btn.data('id');
+  var id = String(btn.data('id'));
   var idx = favorites.indexOf(id);
 
   if (idx === -1) {
@@ -211,7 +276,7 @@ function handleFavClick(e) {
 }
 
 // ==============================
-// VIEW TOGGLE
+// VIEW TOGGLE (CHUYỂN ĐỔI DẠNG LƯỚI / DANH SÁCH)
 // ==============================
 function bindViewToggle() {
   document.getElementById('btnGrid').addEventListener('click', function() {
@@ -235,18 +300,21 @@ function showSkeleton(show) {
   var sk = document.getElementById('skeletonWrap');
   var grid = document.getElementById('docGrid');
   if (show) {
-    sk.style.display = 'flex';
-    grid.style.display = 'none';
+    if(sk) sk.style.display = 'flex';
+    if(grid) grid.style.display = 'none';
   } else {
-    sk.style.display = 'none';
+    if(sk) sk.style.display = 'none';
   }
 }
 
 function showError(msg) {
-  document.getElementById('errorState').style.display = 'block';
-  document.getElementById('errorMsg').textContent = msg || 'Đã xảy ra lỗi.';
+  var errState = document.getElementById('errorState');
+  var errMsg = document.getElementById('errorMsg');
+  if(errState) errState.style.display = 'block';
+  if(errMsg) errMsg.textContent = msg || 'Đã xảy ra lỗi hệ thống.';
 }
 
 function hideError() {
-  document.getElementById('errorState').style.display = 'none';
+  var errState = document.getElementById('errorState');
+  if(errState) errState.style.display = 'none';
 }

@@ -11,7 +11,6 @@
 </head>
 <body class="admin-body">
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg sticky-top">
   <div class="container-fluid px-4">
     <a class="navbar-brand" href="index.html">
@@ -27,7 +26,6 @@
 <div class="container-fluid px-4 py-4">
   <div class="row g-4">
 
-    <!-- SIDEBAR STATS -->
     <div class="col-xl-2 col-lg-3">
       <div class="admin-sidebar">
         <h6 class="sidebar-title">Thống kê</h6>
@@ -38,18 +36,16 @@
       </div>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="col-xl-10 col-lg-9">
 
-      <!-- TOOLBAR -->
       <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
         <h4 class="admin-page-title mb-0"><i class="bi bi-files"></i> Quản lý tài liệu</h4>
         <div class="ms-auto d-flex gap-2">
           <input type="text" id="adminSearch" class="form-control form-control-sm admin-search" placeholder="🔍 Tìm tên tài liệu..." />
           <select id="adminFilterStatus" class="form-select form-select-sm" style="width:150px;">
             <option value="">Tất cả trạng thái</option>
-            <option value="Approved">Approved</option>
-            <option value="Pending">Pending</option>
+            <option value="Approved">Đã duyệt</option>
+            <option value="Pending">Chờ duyệt</option>
           </select>
           <button class="btn btn-primary btn-sm" id="btnOpenAdd">
             <i class="bi bi-plus-lg"></i> Thêm tài liệu
@@ -57,9 +53,7 @@
         </div>
       </div>
 
-      <!-- TABLE -->
       <div class="admin-table-wrap">
-        <!-- Skeleton -->
         <div id="adminSkeleton">
           <div class="skeleton-row" style="height:48px; margin-bottom:8px;"></div>
           <div class="skeleton-row" style="height:48px; margin-bottom:8px; opacity:.7;"></div>
@@ -82,7 +76,6 @@
             <tbody id="adminTableBody"></tbody>
           </table>
 
-          <!-- Pagination -->
           <nav>
             <ul class="pagination pagination-sm justify-content-center" id="adminPagination"></ul>
           </nav>
@@ -97,14 +90,13 @@
         <div id="adminError" class="empty-state" style="display:none;">
           <div class="empty-icon">⚠️</div>
           <h5>Lỗi tải dữ liệu</h5>
-          <button class="btn btn-primary mt-2" onclick="adminLoadDocs()">Thử lại</button>
+          <button class="btn btn-primary mt-2" onclick="adminLoadDocs()"><i class="bi bi-arrow-counterclockwise"></i> Thử lại</button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ADD / EDIT MODAL -->
 <div class="modal fade" id="formModal" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content detail-modal">
@@ -117,22 +109,23 @@
         <div class="row g-3">
           <div class="col-md-12">
             <label class="form-label">Tên tài liệu <span class="text-danger">*</span></label>
-            <input type="text" id="fTitle" class="form-control" placeholder="Ví dụ: Đề cương ôn tập Giải tích 1" />
+            <input type="text" id="fTitle" class="form-control" placeholder="Ví dụ: Đề cương ôn tập Cấu trúc dữ liệu và giải thuật" />
             <div class="invalid-feedback" id="errTitle"></div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Môn học <span class="text-danger">*</span></label>
-            <input type="text" id="fSubject" class="form-control" placeholder="Ví dụ: Giải tích" />
+            <select id="fSubject" class="form-select">
+              <option value="">-- Chọn môn học --</option>
+            </select>
             <div class="invalid-feedback" id="errSubject"></div>
           </div>
           <div class="col-md-6">
             <label class="form-label">Năm học <span class="text-danger">*</span></label>
             <select id="fYear" class="form-select">
               <option value="">-- Chọn năm học --</option>
-              <option>2021-2022</option>
-              <option>2022-2023</option>
-              <option>2023-2024</option>
-              <option>2024-2025</option>
+              <option value="2023-2024">2023-2024</option>
+              <option value="2024-2025">2024-2025</option>
+              <option value="2025-2026">2025-2026</option>
             </select>
             <div class="invalid-feedback" id="errYear"></div>
           </div>
@@ -142,19 +135,14 @@
             <div class="invalid-feedback" id="errFileUrl"></div>
           </div>
           <div class="col-md-12">
-            <label class="form-label">URL ảnh bìa <span class="text-danger">*</span></label>
-            <input type="text" id="fImageUrl" class="form-control" placeholder="https://..." />
-            <div class="invalid-feedback" id="errImageUrl"></div>
-          </div>
-          <div class="col-md-12">
             <label class="form-label">Mô tả</label>
-            <textarea id="fDescription" class="form-control" rows="3" placeholder="Mô tả ngắn về tài liệu..."></textarea>
+            <textarea id="fDescription" class="form-control" rows="3" placeholder="Mô tả cấu trúc hoặc nội dung chính của tài liệu..."></textarea>
           </div>
           <div class="col-md-6">
             <label class="form-label">Trạng thái</label>
             <select id="fStatus" class="form-select">
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
+              <option value="Pending">Chờ duyệt</option>
+              <option value="Approved">Đã duyệt</option>
             </select>
           </div>
         </div>
@@ -170,7 +158,6 @@
   </div>
 </div>
 
-<!-- DELETE CONFIRM MODAL -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content detail-modal text-center p-4">
@@ -188,12 +175,11 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
   <div id="toastMsg" class="toast align-items-center border-0" role="alert">
     <div class="d-flex">
       <div class="toast-body" id="toastBody">Thao tác thành công!</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-toast="dismiss"></button>
     </div>
   </div>
 </div>

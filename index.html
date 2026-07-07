@@ -11,7 +11,6 @@
 </head>
 <body>
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg sticky-top">
   <div class="container">
     <a class="navbar-brand" href="index.html">
@@ -21,14 +20,20 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav ms-auto align-items-center gap-2">
-        <li class="nav-item"><a class="nav-link active" href="index.html"><i class="bi bi-house-fill"></i> Trang chủ</a></li>
+      <ul class="navbar-nav ms-auto align-items-center gap-3">
+        <li class="nav-item">
+          <a class="nav-link active" href="index.html"><i class="bi bi-house-fill"></i> Trang chủ</a>
+        </li>
+        <li class="nav-item">
+          <a class="btn btn-outline-primary btn-sm px-3 d-flex align-items-center gap-1" href="admin.html">
+            <i class="bi bi-shield-lock-fill"></i> Quản trị viên
+          </a>
+        </li>
       </ul>
     </div>
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero-section">
   <div class="hero-bg-decor"></div>
   <div class="container">
@@ -40,7 +45,7 @@
         <div class="hero-search-wrap">
           <div class="input-group hero-search">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" id="searchInput" class="form-control" placeholder="Tìm tài liệu theo tên môn học..." />
+            <input type="text" id="searchInput" class="form-control" placeholder="Tìm tài liệu theo tiêu đề..." />
             <button class="btn btn-search" id="btnSearch">Tìm kiếm</button>
           </div>
         </div>
@@ -49,7 +54,6 @@
   </div>
 </section>
 
-<!-- FILTER BAR -->
 <section class="filter-section py-4">
   <div class="container">
     <div class="row align-items-center g-3">
@@ -63,10 +67,9 @@
         <label class="filter-label"><i class="bi bi-calendar3"></i> Lọc theo năm:</label>
         <select id="filterYear" class="form-select filter-select">
           <option value="">-- Tất cả năm --</option>
-          <option>2021-2022</option>
-          <option>2022-2023</option>
-          <option>2023-2024</option>
-          <option>2024-2025</option>
+          <option value="2023-2024">2023-2024</option>
+          <option value="2024-2025">2024-2025</option>
+          <option value="2025-2026">2025-2026</option>
         </select>
       </div>
       <div class="col-md-4 d-flex align-items-end">
@@ -76,7 +79,6 @@
   </div>
 </section>
 
-<!-- STATS BAR -->
 <div class="container mb-2">
   <div class="d-flex justify-content-between align-items-center">
     <span id="resultCount" class="result-count">Đang tải...</span>
@@ -87,27 +89,22 @@
   </div>
 </div>
 
-<!-- DOCUMENT LIST -->
 <section class="docs-section pb-5">
   <div class="container">
-    <!-- Skeleton loading -->
     <div id="skeletonWrap" class="row g-4">
       <div class="col-md-4" id="sk1"><div class="skeleton-card"></div></div>
       <div class="col-md-4" id="sk2"><div class="skeleton-card"></div></div>
       <div class="col-md-4" id="sk3"><div class="skeleton-card"></div></div>
     </div>
 
-    <!-- Actual list -->
     <div id="docGrid" class="row g-4" style="display:none;"></div>
 
-    <!-- Empty state -->
     <div id="emptyState" class="empty-state" style="display:none;">
       <div class="empty-icon">🔍</div>
       <h4>Không tìm thấy tài liệu</h4>
       <p>Thử thay đổi từ khóa hoặc bộ lọc khác nhé.</p>
     </div>
 
-    <!-- Error state -->
     <div id="errorState" class="empty-state" style="display:none;">
       <div class="empty-icon">⚠️</div>
       <h4>Không thể tải dữ liệu</h4>
@@ -117,24 +114,22 @@
   </div>
 </section>
 
-<!-- DETAIL MODAL -->
 <div class="modal fade" id="detailModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content detail-modal">
       <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="detailModalLabel">Chi tiết tài liệu</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body px-4 pb-4" id="modalBody">
-        <!-- filled by JS -->
-      </div>
+        </div>
     </div>
   </div>
 </div>
 
-<!-- FOOTER -->
 <footer class="site-footer">
   <div class="container text-center">
-    <p class="mb-0">📚 <strong>StudyNotes</strong> – FIT4015 Bài tập lớn &copy; 2024</p>
+    <p class="mb-0">📚 <strong>StudyNotes</strong> – FIT4015 Bài tập lớn &copy; 2026</p>
   </div>
 </footer>
 
