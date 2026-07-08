@@ -1,9 +1,4 @@
-/* ==========================================
-   StudyNotes – style.css
-   FIT4015 BTL - Tối ưu hóa bộ nhận diện tài liệu
-========================================== */
 
-/* --- Variables --- */
 :root {
   --primary:       #1a56db;
   --primary-dark:  #1341a8;
@@ -21,7 +16,6 @@
   --font-body:     'DM Sans', sans-serif;
 }
 
-/* --- Base --- */
 *, *::before, *::after { box-sizing: border-box; }
 body {
   font-family: var(--font-body);
@@ -31,7 +25,6 @@ body {
 }
 .fs-tiny { font-size: .65rem; }
 
-/* --- Navbar --- */
 .navbar {
   background: var(--nav-bg) !important;
   border-bottom: 2px solid var(--primary);
@@ -51,7 +44,6 @@ body {
 .navbar-toggler { border-color: rgba(255,255,255,.3); }
 .navbar-toggler-icon { filter: invert(1); }
 
-/* --- Hero --- */
 .hero-section {
   background: linear-gradient(135deg, #0f172a 0%, #1e3a6e 60%, #1a56db 100%);
   position: relative;
@@ -120,7 +112,6 @@ body {
 }
 .btn-search:hover { background: #d97706; color:#0f172a; }
 
-/* --- Filter Section --- */
 .filter-section { background: var(--bg2); border-bottom: 1px solid #dde4f0; }
 .filter-label { display: block; font-size: .78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing:.5px; margin-bottom: 6px; }
 .filter-select {
@@ -140,7 +131,6 @@ body {
 }
 .btn-reset:hover { border-color: var(--primary); color: var(--primary); }
 
-/* --- Result count & view toggle --- */
 .result-count { font-size: .88rem; color: var(--muted); font-weight: 500; }
 .btn-view-toggle {
   background: #fff;
@@ -154,7 +144,6 @@ body {
 }
 .btn-view-toggle.active, .btn-view-toggle:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
 
-/* --- Document Cards --- */
 .docs-section { padding-top: 20px; }
 
 .doc-card {
@@ -176,10 +165,6 @@ body {
   to   { opacity:1; transform: translateY(0); }
 }
 
-/* =======================================================
-   BỔ SUNG: KHUNG ẢNH BÌA MỜ THU NHỎ (CSS BLUR GENERATOR)
-   Tạo giao diện tài liệu tự động, loại bỏ tàn dư imageUrl cũ
-======================================================= */
 .user-doc-thumbnail-wrap {
   position: relative;
   width: 100%;
@@ -193,7 +178,6 @@ body {
   flex-shrink: 0;
 }
 
-/* Lớp nền mờ chuyển động dải màu */
 .user-doc-blur-bg {
   position: absolute;
   top: -10%; left: -10%;
@@ -204,7 +188,6 @@ body {
   z-index: 1;
 }
 
-/* Tấm nhãn tài liệu mini nổi ở giữa dải mờ */
 .user-doc-preview-card {
   position: relative;
   z-index: 2;
@@ -244,7 +227,6 @@ body {
   font-weight: 600;
 }
 
-/* Chữ đóng dấu chéo góc bảo mật */
 .user-doc-watermark {
   position: absolute;
   bottom: 15px; right: -15px;
@@ -259,7 +241,6 @@ body {
   pointer-events: none;
 }
 
-/* --- Nội dung Card --- */
 .doc-card-body {
   padding: 16px;
   flex: 1;
@@ -337,7 +318,6 @@ body {
 }
 .btn-download:hover { background: var(--primary-dark); color:#fff; }
 
-/* --- Favourite Button --- */
 .btn-fav {
   background: none;
   border: none;
@@ -350,13 +330,9 @@ body {
 .btn-fav.active { color: #ef4444; }
 .btn-fav:hover { transform: scale(1.2); color: #ef4444; }
 
-/* --- Badge Status --- */
 .badge-approved { background: #dcfce7; color: #166534; font-size:.7rem; border-radius:6px; padding: 2px 8px; }
 .badge-pending  { background: #fef9c3; color: #854d0e; font-size:.7rem; border-radius:6px; padding: 2px 8px; }
 
-/* =======================================================
-   SỬA ĐỔI: ĐỒNG BỘ HIỂN THỊ DẠNG DANH SÁCH (LIST VIEW OVERRIDE)
-======================================================= */
 .list-view .doc-card { 
   flex-direction: row; 
   height: auto; 
@@ -379,7 +355,6 @@ body {
   padding: 16px 20px; 
 }
 
-/* --- Skeleton --- */
 .skeleton-card {
   background: linear-gradient(90deg, #e8eef8 25%, #d4ddf2 50%, #e8eef8 75%);
   background-size: 200% 100%;
@@ -398,7 +373,6 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* --- Empty / Error State --- */
 .empty-state {
   text-align: center;
   padding: 64px 20px;
@@ -406,14 +380,12 @@ body {
 }
 .empty-icon { font-size: 3.5rem; margin-bottom: 16px; }
 
-/* --- Detail Modal --- */
 .detail-modal {
   border-radius: var(--radius) !important;
   border: none;
   box-shadow: 0 20px 60px rgba(26,86,219,.15);
 }
 
-/* Khung dải ảnh bìa lớn hoành tráng trong Modal chi tiết */
 .modal-detail-thumbnail-container {
   width: 100%;
   height: 200px;
@@ -465,7 +437,6 @@ body {
 }
 .btn-modal-dl:hover { background: var(--primary-dark); color:#fff; }
 
-/* --- ADMIN --- */
 .admin-body { background: #f1f5fb; }
 
 .admin-sidebar {
@@ -527,7 +498,6 @@ body {
 .admin-table tbody tr:hover { background: #f7f9ff; }
 .admin-table td { font-size: .88rem; padding: 12px 14px; }
 
-/* Custom nút icon admin */
 .btn-icon {
   background: none;
   border: 1.5px solid #dde4f0;
@@ -546,16 +516,14 @@ body {
 .btn-icon-approve { color: #16a34a; }
 .btn-icon-approve:hover { background: #16a34a; color:#fff; border-color:#16a34a; }
 
-/* Pagination */
+
 .pagination .page-link { border-radius: 8px !important; margin: 0 2px; font-size: .82rem; color: var(--primary); }
 .pagination .page-item.active .page-link { background: var(--primary); border-color: var(--primary); }
 
-/* --- Toast --- */
 .toast { background: #1e293b; color:#fff; border-radius: 12px !important; }
 .toast.success { background: #166534; }
 .toast.error   { background: #991b1b; }
 
-/* --- Footer --- */
 .site-footer {
   background: var(--nav-bg);
   color: rgba(255,255,255,.6);
@@ -565,7 +533,6 @@ body {
 }
 .site-footer strong { color: rgba(255,255,255,.9); }
 
-/* --- Responsive --- */
 @media (max-width: 575px) {
   .hero-section { padding: 48px 0 40px; }
   .hero-search .btn-search { padding: 0 14px; }

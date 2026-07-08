@@ -1,7 +1,3 @@
-// ==========================================
-//  admin.js – FIT4015 StudyNotes
-//  Logic trang quản trị (admin.html) - Tiếng Việt Schema
-// ==========================================
 
 var adminDocs = [];
 var adminSubjects = []; // Bộ nhớ cache lưu danh sách môn học
@@ -10,26 +6,21 @@ var deleteId    = null;
 var ITEMS_PER_PAGE = 8;
 var currentPage    = 1;
 
-// --- Khởi động ---
 document.addEventListener('DOMContentLoaded', function() {
   adminLoadDocs();
   bindAdminEvents();
 });
 
-// ==============================
-// LOAD & RENDER TABLE & SUBJECTS
-// ==============================
 function adminLoadDocs() {
   showAdminSkeleton(true);
   document.getElementById('adminTableWrap').style.display = 'none';
   document.getElementById('adminEmpty').style.display = 'none';
   document.getElementById('adminError').style.display = 'none';
 
-  // Tải danh mục môn học trước, sau đó mới tải tài liệu để đồng bộ dữ liệu liên kết
   getAllSubjects()
     .then(function(subjects) {
       adminSubjects = subjects;
-      populateAdminSubjectSelect(subjects); // Đổ dữ liệu vào <select id="fSubject">
+      populateAdminSubjectSelect(subjects);
       return getAllDocuments();
     })
     .then(function(docs) {
@@ -45,7 +36,6 @@ function adminLoadDocs() {
     });
 }
 
-// Hàm bổ trợ nạp danh sách môn học động vào Form
 function populateAdminSubjectSelect(subjects) {
   var select = document.getElementById('fSubject');
   if (!select) return;
@@ -90,16 +80,13 @@ function renderAdminTable(docs, page) {
 }
 
 function buildAdminRow(doc, num) {
-  // Đồng bộ kiểm tra URL ảnh dựa vào doc.imageUrl (Bổ sung kiểm tra hàm tồn tại tránh crash code)
   var thumbHtml = (typeof isValidUrl === 'function' && isValidUrl(doc.imageUrl))
     ? '<img class="doc-thumb-admin" src="' + doc.imageUrl + '" alt="" onerror="this.src=\'\';">'
     : '<div class="doc-thumb-admin d-flex align-items-center justify-content-center bg-light">📄</div>';
 
-  // ĐỒNG BỘ: Ánh xạ từ ID môn học (subjectId) sang Tên môn học thực tế hiển thị từ MockAPI
   var matchedSub = adminSubjects.find(function(s) { return String(s.id) === String(doc.subjectId); });
   var displaySubject = matchedSub ? matchedSub.name : 'Chưa phân loại';
 
-  // ĐỒNG BỘ: Chuyển đổi hiển thị trạng thái chữ Tiếng Anh sang Badge Tiếng Việt đẹp mắt
   var statusHtml = '';
   if (doc.status === 'Approved') {
     statusHtml = '<span class="badge bg-success">Đã duyệt</span>';
@@ -107,7 +94,6 @@ function buildAdminRow(doc, num) {
     statusHtml = '<span class="badge bg-warning text-dark">Chờ duyệt</span>';
   }
 
-  // ĐÃ SỬA: Thay thế và dọn dẹp biến statusBadge cũ bị thiếu để tránh lỗi đứng trang
   return '<td>' + num + '</td>'
     + '<td><div class="d-flex align-items-center gap-2">' + thumbHtml
     +   '<span style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
@@ -127,9 +113,6 @@ function buildAdminRow(doc, num) {
     + '</td>';
 }
 
-// ==============================
-// PAGINATION
-// ==============================
 function renderPagination(totalPages, current) {
   var ul = document.getElementById('adminPagination');
   ul.innerHTML = '';
@@ -149,9 +132,6 @@ function renderPagination(totalPages, current) {
   }
 }
 
-// ==============================
-// STATS
-// ==============================
 function updateStats(docs) {
   var approved = docs.filter(function(d) { return d.status === 'Approved'; }).length;
   var pending  = docs.filter(function(d) { return d.status !== 'Approved'; }).length;
@@ -163,9 +143,6 @@ function updateStats(docs) {
   $('#statViews').text(views).hide().fadeIn(700);
 }
 
-// ==============================
-// FILTER (Tìm theo Tende + status)
-// ==============================
 function getAdminFiltered(docs) {
   var search = (document.getElementById('adminSearch').value || '').toLowerCase().trim();
   var status = document.getElementById('adminFilterStatus').value;
@@ -176,9 +153,6 @@ function getAdminFiltered(docs) {
   });
 }
 
-// ==============================
-// ADD / EDIT FORM
-// ==============================
 function openAddDoc() {
   editingId = null;
   document.getElementById('formModalTitle').textContent = 'Thêm tài liệu mới';
@@ -199,7 +173,7 @@ function openEditDoc(id) {
   clearFormErrors();
   document.getElementById('formError').classList.add('d-none');
 
-  // ĐỒNG BỘ: Điền dữ liệu vào form từ các trường tiếng Việt của MockAPI
+
   document.getElementById('fTitle').value       = doc.Tende       || '';
   document.getElementById('fSubject').value     = doc.subjectId   || ''; // Chọn đúng ID môn học liên kết
   document.getElementById('fYear').value        = doc.Nam         || '';
@@ -212,7 +186,6 @@ function openEditDoc(id) {
   m.show();
 }
 
-// ĐÃ SỬA: Sửa lại hàm để dọn dẹp sạch sẽ dữ liệu của các loại thẻ Select và Input mới
 function resetAdminForm() {
   ['fTitle', 'fSubject', 'fFileUrl', 'fImageUrl', 'fDescription', 'fYear'].forEach(function(id) {
     var element = document.getElementById(id);
@@ -221,7 +194,6 @@ function resetAdminForm() {
   document.getElementById('fStatus').value = 'Pending';
 }
 
-// ĐỒNG BỘ: Thu thập cấu trúc dữ liệu theo Schema tiếng Việt mới
 function getFormData() {
   return {
     Tende:       document.getElementById('fTitle').value.trim(),
@@ -236,14 +208,12 @@ function getFormData() {
 
 function saveDoc() {
   var data = getFormData();
-  
-  // Kiểm tra biểu mẫu nhanh thay vì dùng hàm validate cũ chưa đồng bộ
+
   if (!data.Tende || !data.subjectId || !data.Nam || !data.Link) {
     alert("Vui lòng điền đầy đủ các thông tin bắt buộc (*)");
     return;
   }
 
-  // Trạng thái Loading
   document.getElementById('btnSave').disabled = true;
   document.getElementById('btnSaveSpinner').classList.remove('d-none');
 
@@ -276,9 +246,6 @@ function saveDoc() {
     });
 }
 
-// ==============================
-// APPROVE
-// ==============================
 function approveDoc(id) {
   updateDocument(id, { status: 'Approved' })
     .then(function(updated) {
@@ -291,9 +258,6 @@ function approveDoc(id) {
     .catch(function() { showToast('❌ Không thể duyệt tài liệu', 'error'); });
 }
 
-// ==============================
-// DELETE
-// ==============================
 function openDeleteDoc(id, name) {
   deleteId = id;
   document.getElementById('deleteDocName').textContent = 'Tài liệu: "' + name + '"';
@@ -323,9 +287,6 @@ function confirmDelete() {
     });
 }
 
-// ==============================
-// BIND EVENTS
-// ==============================
 function bindAdminEvents() {
   document.getElementById('btnSave').addEventListener('click', saveDoc);
   document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
@@ -348,47 +309,36 @@ function bindAdminEvents() {
   });
 }
 
-// ==============================
-// SKELETON & ERRORS BYPASS
-// ==============================
 function showAdminSkeleton(show) {
   document.getElementById('adminSkeleton').style.display = show ? 'block' : 'none';
 }
 function clearFormErrors() {
   $('.invalid-feedback').text('');
   $('.form-control, .form-select').removeClass('is-invalid');
-}// ==========================================
-//  admin.js – FIT4015 StudyNotes
-//  Logic trang quản trị (admin.html) - Tiếng Việt Schema
-// ==========================================
+}
 
 var adminDocs = [];
-var adminSubjects = []; // Bộ nhớ cache lưu danh sách môn học
+var adminSubjects = [];
 var editingId   = null;
 var deleteId    = null;
 var ITEMS_PER_PAGE = 8;
 var currentPage    = 1;
 
-// --- Khởi động ---
 document.addEventListener('DOMContentLoaded', function() {
   adminLoadDocs();
   bindAdminEvents();
 });
 
-// ==============================
-// LOAD & RENDER TABLE & SUBJECTS
-// ==============================
 function adminLoadDocs() {
   showAdminSkeleton(true);
   document.getElementById('adminTableWrap').style.display = 'none';
   document.getElementById('adminEmpty').style.display = 'none';
   document.getElementById('adminError').style.display = 'none';
 
-  // Tải danh mục môn học trước, sau đó mới tải tài liệu để đồng bộ dữ liệu liên kết
   getAllSubjects()
     .then(function(subjects) {
       adminSubjects = subjects;
-      populateAdminSubjectSelect(subjects); // Đổ dữ liệu vào <select id="fSubject">
+      populateAdminSubjectSelect(subjects);
       return getAllDocuments();
     })
     .then(function(docs) {
@@ -404,7 +354,6 @@ function adminLoadDocs() {
     });
 }
 
-// Hàm bổ trợ nạp danh sách môn học động vào Form
 function populateAdminSubjectSelect(subjects) {
   var select = document.getElementById('fSubject');
   if (!select) return;
@@ -448,15 +397,12 @@ function renderAdminTable(docs, page) {
   renderPagination(totalPages, page);
 }
 
-// ĐÃ SỬA: Thay thế khối render ảnh cũ bằng một hộp icon tài liệu đồng bộ sang xịn mịn
 function buildAdminRow(doc, num) {
   var thumbHtml = '<div class="doc-thumb-admin d-flex align-items-center justify-content-center bg-light text-primary rounded" style="width:36px; height:36px; font-size:16px; border: 1px solid #dee2e6;"><i class="bi bi-file-earmark-text-fill"></i></div>';
 
-  // Ánh xạ từ ID môn học (subjectId) sang Tên môn học thực tế hiển thị từ MockAPI
   var matchedSub = adminSubjects.find(function(s) { return String(s.id) === String(doc.subjectId); });
   var displaySubject = matchedSub ? matchedSub.name : 'Chưa phân loại';
 
-  // Chuyển đổi hiển thị trạng thái chữ Tiếng Anh sang Badge Tiếng Việt đẹp mắt
   var statusHtml = '';
   if (doc.status === 'Approved') {
     statusHtml = '<span class="badge bg-success">Đã duyệt</span>';
@@ -483,9 +429,6 @@ function buildAdminRow(doc, num) {
     + '</td>';
 }
 
-// ==============================
-// PAGINATION
-// ==============================
 function renderPagination(totalPages, current) {
   var ul = document.getElementById('adminPagination');
   ul.innerHTML = '';
@@ -505,9 +448,6 @@ function renderPagination(totalPages, current) {
   }
 }
 
-// ==============================
-// STATS
-// ==============================
 function updateStats(docs) {
   var approved = docs.filter(function(d) { return d.status === 'Approved'; }).length;
   var pending  = docs.filter(function(d) { return d.status !== 'Approved'; }).length;
@@ -519,9 +459,6 @@ function updateStats(docs) {
   $('#statViews').text(views);
 }
 
-// ==============================
-// FILTER (Tìm theo Tende + status)
-// ==============================
 function getAdminFiltered(docs) {
   var search = (document.getElementById('adminSearch').value || '').toLowerCase().trim();
   var status = document.getElementById('adminFilterStatus').value;
@@ -532,9 +469,6 @@ function getAdminFiltered(docs) {
   });
 }
 
-// ==============================
-// ADD / EDIT FORM
-// ==============================
 function openAddDoc() {
   editingId = null;
   document.getElementById('formModalTitle').textContent = 'Thêm tài liệu mới';
@@ -546,7 +480,6 @@ function openAddDoc() {
   m.show();
 }
 
-// ĐÃ SỬA: Loại bỏ gán giá trị cho fImageUrl cũ
 function openEditDoc(id) {
   var doc = adminDocs.find(function(d) { return d.id === id; });
   if (!doc) return;
@@ -556,7 +489,6 @@ function openEditDoc(id) {
   clearFormErrors();
   document.getElementById('formError').classList.add('d-none');
 
-  // Điền dữ liệu vào form từ các trường tiếng Việt của MockAPI
   document.getElementById('fTitle').value       = doc.Tende       || '';
   document.getElementById('fSubject').value     = doc.subjectId   || ''; 
   document.getElementById('fYear').value        = doc.Nam         || '';
@@ -568,7 +500,6 @@ function openEditDoc(id) {
   m.show();
 }
 
-// ĐÃ SỬA: Loại bỏ phần tử fImageUrl khỏi danh sách reset form
 function resetAdminForm() {
   ['fTitle', 'fSubject', 'fFileUrl', 'fDescription', 'fYear'].forEach(function(id) {
     var element = document.getElementById(id);
@@ -577,7 +508,6 @@ function resetAdminForm() {
   document.getElementById('fStatus').value = 'Pending';
 }
 
-// ĐÃ SỬA: Thu thập cấu trúc dữ liệu loại bỏ hoàn toàn trường imageUrl
 function getFormData() {
   return {
     Tende:       document.getElementById('fTitle').value.trim(),
@@ -597,7 +527,6 @@ function saveDoc() {
     return;
   }
 
-  // Trạng thái Loading
   document.getElementById('btnSave').disabled = true;
   document.getElementById('btnSaveSpinner').classList.remove('d-none');
 
@@ -631,9 +560,6 @@ function saveDoc() {
     });
 }
 
-// ==============================
-// APPROVE
-// ==============================
 function approveDoc(id) {
   updateDocument(id, { status: 'Approved' })
     .then(function(updated) {
@@ -646,9 +572,6 @@ function approveDoc(id) {
     .catch(function() { showToast('❌ Không thể duyệt tài liệu', 'error'); });
 }
 
-// ==============================
-// DELETE
-// ==============================
 function openDeleteDoc(id, name) {
   deleteId = id;
   document.getElementById('deleteDocName').textContent = 'Tài liệu: "' + name + '"';
@@ -679,9 +602,6 @@ function confirmDelete() {
     });
 }
 
-// ==============================
-// BIND EVENTS
-// ==============================
 function bindAdminEvents() {
   document.getElementById('btnSave').addEventListener('click', saveDoc);
   document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
@@ -700,9 +620,6 @@ function bindAdminEvents() {
   });
 }
 
-// ==============================
-// SKELETON & ERRORS BYPASS
-// ==============================
 function showAdminSkeleton(show) {
   document.getElementById('adminSkeleton').style.display = show ? 'block' : 'none';
 }
@@ -711,7 +628,6 @@ function clearFormErrors() {
   $('.form-control, .form-select').removeClass('is-invalid');
 }
 
-// Hàm showToast bổ trợ hiển thị thông báo
 function showToast(msg, type) {
   var toastEl = document.getElementById('toastMsg');
   var toastBody = document.getElementById('toastBody');

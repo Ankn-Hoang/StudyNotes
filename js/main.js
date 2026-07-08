@@ -1,38 +1,27 @@
-// ==========================================
-//  main.js – FIT4015 StudyNotes
-//  Logic trang khách hàng (index.html)
-// ==========================================
 
 var allDocs = [];        // Cache dữ liệu tài liệu hiện tại
 var favorites = JSON.parse(localStorage.getItem('sn_favs') || '[]');
 var isGridView = true;
 
-// Lưu trữ trạng thái bộ lọc hiện tại để gọi API
 var currentFilters = {
   search: "",
   subjectId: "",
   schoolYear: ""
 };
 
-// --- Khởi động ---
 document.addEventListener('DOMContentLoaded', function() {
   initApp();
   bindSearchEvents();
   bindViewToggle();
 });
 
-// ==============================
-// KHỞI TẠO & TẢI DANH MỤC MÔN HỌC
-// ==============================
 function initApp() {
   showSkeleton(true);
   hideError();
 
-  // Tải danh mục môn học động từ MockAPI trước để đổ vào ô Select Filter
   getAllSubjects()
     .then(function(subjects) {
       populateFilterSubject(subjects);
-      // Sau khi đổ xong môn học, tiến hành tải danh sách tài liệu mặc định
       loadDocuments();
     })
     .catch(function(err) {
@@ -41,28 +30,22 @@ function initApp() {
     });
 }
 
-// Đổ dữ liệu môn học vào thanh lọc ô select <select id="filterSubject">
 function populateFilterSubject(subjects) {
   var sel = document.getElementById('filterSubject');
-  // Xóa sạch các option cũ trừ option đầu tiên
   sel.innerHTML = '<option value="">-- Tất cả môn học --</option>';
   
   subjects.forEach(function(sub) {
     var opt = document.createElement('option');
-    opt.value = sub.id;        // Value lưu ID của môn học trên MockAPI (Ví dụ: "1", "2")
-    opt.textContent = sub.name; // Text hiển thị tên môn (Ví dụ: "Toán", "Ngữ Văn")
+    opt.value = sub.id; (Ví dụ: "1", "2")
+    opt.textContent = sub.name;
     sel.appendChild(opt);
   });
 }
 
-// ==============================
-// LOAD & RENDER DOCUMENTS
-// ==============================
 function loadDocuments() {
   showSkeleton(true);
   hideError();
 
-  // Gọi hàm API: Truyền tham số để MockAPI xử lý lọc từ Server luôn
   getAllDocuments(currentFilters.search, currentFilters.subjectId, currentFilters.schoolYear)
     .then(function(docs) {
       allDocs = docs;
@@ -75,7 +58,6 @@ function loadDocuments() {
     });
 }
 
-// Render danh sách card ra ngoài màn hình
 function renderDocs(docs) {
   var grid = document.getElementById('docGrid');
   var empty = document.getElementById('emptyState');
@@ -83,7 +65,6 @@ function renderDocs(docs) {
 
   grid.innerHTML = '';
 
-  // Chỉ lọc và hiển thị những tài liệu có trạng thái "Approved" (Đã được duyệt)
   var visible = docs.filter(function(d) { return d.status === 'Approved' || !d.status; });
 
   if (visible.length === 0) {
@@ -98,7 +79,6 @@ function renderDocs(docs) {
   grid.className = isGridView ? 'row g-4' : 'row g-3 list-view';
   count.textContent = 'Hiển thị ' + visible.length + ' tài liệu';
 
-  // Tiến hành dựng giao diện cho từng Card tài liệu
   visible.forEach(function(doc, idx) {
     var col = document.createElement('div');
     col.className = isGridView ? 'col-sm-6 col-md-4 col-lg-4' : 'col-12';
@@ -108,20 +88,16 @@ function renderDocs(docs) {
   });
 }
 
-// ĐÃ SỬA: Tạo cấu trúc HTML tự động sinh bản thu nhỏ mờ dựa trên chữ viết tắt của Tende
 function buildDocCard(doc) {
   var isFav = favorites.indexOf(doc.id) !== -1;
-  
-  // Đồng bộ hóa các trường thuộc tính tiếng Việt từ MockAPI
+
   var title = doc.Tende || 'Không có tiêu đề';
   var description = doc.Mota || 'Chưa có mô tả ngắn.';
   var year = doc.Nam || '–';
   var fileLink = doc.Link || '#';
 
-  // Lấy 2 ký tự đầu của tiêu đề viết hoa làm background mờ nghệ thuật
   var shortText = title.substring(0, 2).toUpperCase();
 
-  // Khối HTML giả lập bản xem trước tài liệu thu nhỏ không cần imageUrl
   var documentThumbnailHtml = '<div class="user-doc-thumbnail-wrap">'
     + '  <div class="user-doc-blur-bg">' + shortText + '</div>'
     + '  <div class="user-doc-preview-card">'
@@ -150,10 +126,6 @@ function buildDocCard(doc) {
     + '</div>';
 }
 
-// ==============================
-// DETAIL MODAL & TĂNG VIEW
-// ==============================
-// ĐÃ SỬA: Loại bỏ hình ảnh và thiết kế cấu trúc bản xem trước mờ thu nhỏ to hơn bên trong modal chi tiết
 function openDetail(id) {
   var doc = allDocs.find(function(d) { return d.id === id; });
   if (!doc) return;
@@ -167,7 +139,6 @@ function openDetail(id) {
   var temporaryViews = (parseInt(doc.views) || 0) + 1;
   var shortText = title.substring(0, 2).toUpperCase();
 
-  // Tạo banner tài liệu thu nhỏ lớn trong Modal chi tiết thay cho hình ảnh cũ
   var modalPreviewHtml = '<div class="user-doc-thumbnail-wrap rounded-3 mb-3" style="height: 180px; background: #f1f3f5;">'
     + '  <div class="user-doc-blur-bg" style="font-size: 120px;">' + shortText + '</div>'
     + '  <div class="user-doc-preview-card" style="padding: 20px 40px;">'
@@ -195,7 +166,6 @@ function openDetail(id) {
   var modal = new bootstrap.Modal(document.getElementById('detailModal'));
   modal.show();
 
-  // Kích hoạt hàm tăng lượt xem gửi PUT API chạy ngầm lên MockAPI
   if (typeof incrementView === 'function') {
     incrementView(doc)
       .then(function(updatedDoc) {
@@ -207,9 +177,6 @@ function openDetail(id) {
   }
 }
 
-// ==============================
-// SEARCH & FILTER (TÍCH HỢP SERVER API)
-// ==============================
 function bindSearchEvents() {
   document.getElementById('btnSearch').addEventListener('click', applyFilters);
   
@@ -254,9 +221,6 @@ function resetFilters() {
   });
 }
 
-// ==============================
-// FAVOURITES (SỬ DỤNG JQUERY)
-// ==============================
 function handleFavClick(e) {
   e.stopPropagation();
   var btn = $(this);
@@ -275,9 +239,6 @@ function handleFavClick(e) {
   localStorage.setItem('sn_favs', JSON.stringify(favorites));
 }
 
-// ==============================
-// VIEW TOGGLE (CHUYỂN ĐỔI DẠNG LƯỚI / DANH SÁCH)
-// ==============================
 function bindViewToggle() {
   document.getElementById('btnGrid').addEventListener('click', function() {
     isGridView = true;
@@ -293,9 +254,6 @@ function bindViewToggle() {
   });
 }
 
-// ==============================
-// SKELETON / ERROR HELPERS
-// ==============================
 function showSkeleton(show) {
   var sk = document.getElementById('skeletonWrap');
   var grid = document.getElementById('docGrid');
